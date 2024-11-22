@@ -6,12 +6,10 @@ describe('UI Testing using Selenium', function() {
 
     let driver;
 
-    // Inisialisasi WebDriver sebelum menjalankan test case
     before(async function() {
         driver = await new Builder().forBrowser('chrome').build(); // Bisa diganti 'firefox' untuk Firefox
     });
 
-    // Tutup WebDriver setelah semua test selesai
     after(async function() {
         await driver.quit();
     });
@@ -33,22 +31,16 @@ describe('UI Testing using Selenium', function() {
 
     it('should click the login button', async function() {
         await driver.findElement(By.id('loginButton')).click();
-        // Lakukan tindakan lebih lanjut, seperti validasi login (ini disimulasikan di sini)
-        // Misal: validasi pesan error jika login gagal atau redirect halaman jika berhasil
     });
 
-    
     it('should display an error message if login fails', async function() {
-        // Input username dan password yang salah
         await driver.findElement(By.id('username')).clear();
         await driver.findElement(By.id('username')).sendKeys('wronguser');
         await driver.findElement(By.id('password')).clear();
         await driver.findElement(By.id('password')).sendKeys('wrongpassword');
         
-        // Klik tombol login
         await driver.findElement(By.id('loginButton')).click();
     
-        // Tunggu hingga elemen errorMessage muncul
         try {
             const errorElement = await driver.wait(until.elementLocated(By.id('errorMessage')), 5000); // Tunggu hingga 5 detik
             const errorMessage = await errorElement.getText();
@@ -57,48 +49,92 @@ describe('UI Testing using Selenium', function() {
             console.log("Pesan error tidak ditemukan:", error);
         }
     });
-    
-    
+
 
     it('should input username and password using CSS Selector and XPath', async function() {
-        // Temukan elemen username dan password
         const usernameElement = await driver.findElement(By.css('#username'));
         const passwordElement = await driver.findElement(By.xpath('//*[@id="password"]'));
-    
-        // Kosongkan field username dan password sebelum mengisi data baru
+
         await usernameElement.clear();
         await passwordElement.clear();
-    
-        // Tambahkan data ke field username dan password
+
         await usernameElement.sendKeys('testuser');
         await passwordElement.sendKeys('password123');
-    
-        // Tambahkan delay sebentar untuk memastikan input masuk
+
         await driver.sleep(1000);
-    
-        // Cek apakah data berhasil diisi
+
         const usernameValue = await usernameElement.getAttribute('value');
         const passwordValue = await passwordElement.getAttribute('value');
-    
-        // Lakukan pengecekan hasil input
+
         expect(usernameValue).to.equal('testuser');
         expect(passwordValue).to.equal('password123');
     });
-    
-    
-    // Test case 3: Validasi apakah tombol login dan field input terlihat di layar
-    it('should check if login button and input fields are visible on the screen', async function() {
-        // Validasi apakah tombol login terlihat
-        const loginButtonDisplayed = await driver.findElement(By.id('loginButton')).isDisplayed();
-        expect(loginButtonDisplayed).to.be.true;
-        
-        // Validasi apakah field username terlihat
-        const usernameFieldDisplayed = await driver.findElement(By.id('username')).isDisplayed();
-        expect(usernameFieldDisplayed).to.be.true;
 
-        // Validasi apakah field password terlihat
+    it('should validate failed login with error message', async function() {
+        await driver.findElement(By.id('username')).clear();
+        await driver.findElement(By.id('username')).sendKeys('wronguser');
+        await driver.findElement(By.id('password')).clear();
+        await driver.findElement(By.id('password')).sendKeys('wrongpassword');
+
+        await driver.findElement(By.id('loginButton')).click();
+
+        try {
+            const errorElement = await driver.wait(until.elementLocated(By.id('errorMessage')), 5000); // Simpan elemen error
+            const errorMessage = await errorElement.getText();
+            console.log("Pesan error ditemukan:", errorMessage);
+
+            expect(errorMessage).to.equal('Login gagal. Silakan coba lagi.');
+        } catch (error) {
+            console.log("Pesan error tidak ditemukan:", error);
+        }
+    });
+
+    it('should check if login button and input fields are visible on the screen', async function() {
+        const loginButtonDisplayed = await driver.findElement(By.id('loginButton')).isDisplayed();
+        const usernameFieldDisplayed = await driver.findElement(By.id('username')).isDisplayed();
         const passwordFieldDisplayed = await driver.findElement(By.id('password')).isDisplayed();
+
+        expect(loginButtonDisplayed).to.be.true;
+        expect(usernameFieldDisplayed).to.be.true;
         expect(passwordFieldDisplayed).to.be.true;
     });
 
+    it('should display an error message if username or password is too short', async function() {
+        await driver.findElement(By.id('username')).clear();
+        await driver.findElement(By.id('username')).sendKeys('usr');
+        await driver.findElement(By.id('password')).clear();
+        await driver.findElement(By.id('password')).sendKeys('pwd');
+    
+        await driver.findElement(By.id('loginButton')).click();
+    
+        try {
+            const errorElement = await driver.wait(until.elementLocated(By.id('errorMessage')), 5000);
+            const errorMessage = await errorElement.getText();
+            console.log("Pesan error ditemukan:", errorMessage);
+    
+            expect(errorMessage).to.equal('Username dan password harus minimal 5 karakter.');
+        } catch (error) {
+            console.log("Pesan error tidak ditemukan:", error);
+        }
+    });
+    
+    it('should display an error message if username is not an email', async function() {
+        await driver.findElement(By.id('username')).clear();
+        await driver.findElement(By.id('username')).sendKeys('not-an-email');
+        await driver.findElement(By.id('password')).clear();
+        await driver.findElement(By.id('password')).sendKeys('password123');
+    
+        await driver.findElement(By.id('loginButton')).click();
+    
+        try {
+            const errorElement = await driver.wait(until.elementLocated(By.id('errorMessage')), 5000);
+            const errorMessage = await errorElement.getText();
+            console.log("Pesan error ditemukan:", errorMessage);
+    
+            expect(errorMessage).to.equal('Username harus berupa email yang valid.');
+        } catch (error) {
+            console.log("Pesan error tidak ditemukan:", error);
+        }
+    });
+    
 });
